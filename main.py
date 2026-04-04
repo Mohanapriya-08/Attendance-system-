@@ -126,3 +126,33 @@ async def delete_student(student_id: int):
     query = students.delete().where(students.c.id == student_id)
     await database.execute(query)
     return {"message": f"Student {student_id} deleted! ✅"}
+
+# Get latest active session
+@app.get("/active-session")
+async def get_active_session():
+    query = sessions.select().where(
+        sessions.c.status == "active"
+    ).order_by(sessions.c.id.desc())
+    row = await database.fetch_one(query)
+    if row:
+        return {"session": dict(row)}
+    return {"session": None}
+
+# Teacher Login
+@app.post("/teacher-login")
+async def teacher_login(username: str, password: str):
+    query = teachers.select().where(
+        teachers.c.name == username
+    )
+    teacher = await database.fetch_one(query)
+    if teacher and password == "teacher123":
+        return {
+            "success": True,
+            "teacher_id": teacher["id"],
+            "name": teacher["name"],
+            "message": "Login successful! ✅"
+        }
+    return {
+        "success": False,
+        "message": "Invalid credentials! ❌"
+    }

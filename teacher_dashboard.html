@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: white;
+            min-height: 100vh;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #00d4ff;
+            font-size: 22px;
+        }
+        .logout-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .card {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #2a2a4a;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .card h2 {
+            margin-bottom: 25px;
+            color: #00d4ff;
+            font-size: 18px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0f0f1a;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            outline: none;
+        }
+        input:focus, select:focus {
+            border-color: #00d4ff;
+        }
+        .start-btn {
+            width: 100%;
+            padding: 14px;
+            background: #00d4ff;
+            color: #0f0f1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .end-btn {
+            width: 100%;
+            padding: 14px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+        .view-btn {
+            width: 100%;
+            padding: 14px;
+            background: #1a1a2e;
+            color: #00d4ff;
+            border: 1px solid #00d4ff;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        .status.active {
+            background: #003300;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📡 BT Attendance — Teacher Panel</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="card">
+        <h2>Start New Class</h2>
+        <div class="form-group">
+            <label>Subject</label>
+            <input type="text" id="subject" placeholder="e.g. DBMS" />
+        </div>
+        <div class="form-group">
+            <label>Section</label>
+            <input type="text" id="section" placeholder="e.g. CSE-B" />
+        </div>
+        <button class="start-btn" id="startBtn" onclick="startClass()">
+            🚀 Start Class
+        </button>
+        <button class="end-btn" id="endBtn" onclick="endClass()">
+            🛑 End Class
+        </button>
+        <button class="view-btn" id="viewBtn" onclick="viewDashboard()">
+            📊 View Live Attendance
+        </button>
+        <div class="status" id="status">
+            ✅ Class is running live!
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://web-production-204c7.up.railway.app';
+        let sessionId = null;
+
+        // Check if logged in
+        const teacherId = localStorage.getItem('teacher_id');
+        const teacherName = localStorage.getItem('teacher_name');
+        if (!teacherId) {
+            window.location.href = 'login.html';
+        }
+
+        async function startClass() {
+            const subject = document.getElementById('subject').value;
+            const section = document.getElementById('section').value;
+
+            if (!subject || !section) {
+                alert('Please fill all fields!');
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/start-class?teacher_id=${teacherId}&subject=${subject}&section=${section}`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            sessionId = data.session_id;
+
+            localStorage.setItem('session_id', sessionId);
+
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('endBtn').style.display = 'block';
+            document.getElementById('viewBtn').style.display = 'block';
+            document.getElementById('status').classList.add('active');
+        }
+
+        async function endClass() {
+            if (!sessionId) return;
+            await fetch(`${API_BASE}/end-class/${sessionId}`, {
+                method: 'POST'
+            });
+            alert('Class ended successfully! ✅');
+            sessionId = null;
+            localStorage.removeItem('session_id');
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('endBtn').style.display = 'none';
+            document.getElementById('viewBtn').style.display = 'none';
+            document.getElementById('status').classList.remove('active');
+        }
+
+        function viewDashboard() {
+            window.location.href = 'attendance_dashboard.html';
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
