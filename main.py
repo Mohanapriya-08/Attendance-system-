@@ -156,3 +156,9 @@ async def teacher_login(username: str, password: str):
         "success": False,
         "message": "Invalid credentials! ❌"
     }
+    # Get all teachers
+@app.get("/get-teachers")
+async def get_teachers():
+    query = teachers.select()
+    rows = await database.fetch_all(query)
+    return {"teachers": [dict(row) for row in rows]}
